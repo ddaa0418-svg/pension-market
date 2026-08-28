@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Pretendard Variable", Pretendard, "Noto Sans KR", system-ui,
+    sans-serif;
+  --color-navy: #1b365d;
+  --color-navy-deep: #12243f;
+  --color-navy-soft: #e8eef6;
+  --color-gold: #c4a35a;
+  --color-gold-soft: #f6edd6;
+  --color-cream: #faf7f2;
+  --color-sand: #f3eee6;
+  --color-ink: #2c2a26;
+  --color-muted: #6b655c;
+  --color-gap: #b45309;
+  --color-gap-soft: #fff7ed;
+  --color-save: #047857;
+  --color-save-soft: #ecfdf5;
+  --color-terra: #c45c3a;
+  --color-terra-deep: #a4472c;
+  --color-terra-soft: #f8ebe6;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(1.08);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.08);
+    opacity: 0;
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.35s ease-out both;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.6s ease-out infinite;
+}
