@@ -25,7 +25,7 @@ export const STEP_META: Record<
   },
   pension: {
     eyebrow: 'STEP 3 · 보유 연금',
-    question: '지금 가지고 있는 연금은 무엇인가요?',
+    question: '국민연금 외에 추가로 준비 중인 연금은?',
     helper: '하나만 선택해 주세요. 정확히 몰라도 가장 가까운 항목을 고르면 됩니다.',
   },
   lifestyle: {
@@ -68,16 +68,16 @@ export const INCOME_OPTIONS: QuizOption<IncomeBand>[] = [
 
 export const PENSION_OPTIONS: QuizOption<PensionHold>[] = [
   {
-    value: 'national',
-    title: '국민연금만 납부 중 (또는 잘 모르겠음)',
+    value: 'national_only',
+    title: '추가 준비 없음 (국민연금만 납부 중 / 잘 모름)',
   },
   {
-    value: 'personal',
-    title: '개인연금(연금저축/보험)만 보유',
+    value: 'personal_only',
+    title: '개인연금만 추가 보유 (연금저축, 연금보험)',
   },
   {
-    value: 'irp',
-    title: '퇴직연금(IRP/DC)만 보유',
+    value: 'severance_only',
+    title: '퇴직연금만 추가 보유 (회사 퇴직금, IRP)',
   },
   {
     value: 'both',

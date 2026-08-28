@@ -44,11 +44,25 @@ export function Result({ answers, diagnosis, onRestart }: ResultProps) {
         </p>
 
         <section
-          className="rounded-2xl border-2 border-amber-400 bg-gap-soft p-5 shadow-[0_8px_24px_rgba(180,83,9,0.08)]"
+          className={
+            diagnosis.gapBadgeKind === 'urgent'
+              ? 'rounded-2xl border-2 border-amber-400 bg-gap-soft p-5 shadow-[0_8px_24px_rgba(180,83,9,0.08)]'
+              : 'rounded-2xl border-2 border-navy/25 bg-navy-soft p-5 shadow-[0_8px_24px_rgba(27,54,93,0.08)]'
+          }
           aria-label="예상 은퇴 부족 자금"
         >
-          <p className="text-[14px] font-semibold text-gap">⚠️ 예상 은퇴 부족 자금</p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <p
+            className={
+              diagnosis.gapBadgeKind === 'urgent'
+                ? 'text-[14px] font-semibold text-gap'
+                : 'text-[14px] font-semibold text-navy'
+            }
+          >
+            {diagnosis.gapBadgeKind === 'urgent'
+              ? '⚠️ 예상 은퇴 부족 자금'
+              : '예상 은퇴 부족 자금'}
+          </p>
+          <div className="mt-2 flex flex-col items-start gap-2">
             <p className="text-[1.65rem] font-bold tracking-tight text-navy">
               {diagnosis.gapLabel}
             </p>
@@ -56,14 +70,19 @@ export function Result({ answers, diagnosis, onRestart }: ResultProps) {
               className={
                 diagnosis.gapBadgeKind === 'urgent'
                   ? 'inline-flex rounded-full bg-gap px-2.5 py-1 text-[12px] font-semibold text-white'
-                  : 'inline-flex rounded-full bg-navy-soft px-2.5 py-1 text-[12px] font-semibold text-navy'
+                  : 'inline-flex rounded-full bg-save px-2.5 py-1 text-[12px] font-semibold text-white'
               }
             >
               {diagnosis.gapBadge}
             </span>
           </div>
+          {diagnosis.gapWarning ? (
+            <div className="mt-4 rounded-xl border-2 border-gap bg-white px-3.5 py-3 text-[14px] leading-relaxed text-navy">
+              {diagnosis.gapWarning}
+            </div>
+          ) : null}
           <p className="mt-3 text-[13px] leading-relaxed text-muted">
-            {diagnosis.gapBasis}
+            {diagnosis.gapNote}
           </p>
         </section>
 

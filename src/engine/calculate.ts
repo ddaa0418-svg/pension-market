@@ -25,12 +25,12 @@ type GapBasisKind = 'A' | 'B'
 
 /**
  * 기준 A: 국민연금 평균 2.3억 원만 차감
- *   - 국민연금만(또는 잘 모르겠음) / 개인연금만
+ *   - 추가 준비 없음(national_only) / 개인연금만 추가(personal_only)
  * 기준 B: 국민연금 2.3억 + 퇴직연금 평균 1.9억 = 총 4.2억 원 차감
- *   - 퇴직연금만 / 퇴직연금 + 개인연금
+ *   - 퇴직연금만 추가(severance_only) / 퇴직연금 + 개인연금(both)
  */
 function gapBasisKind(pension: PensionHold): GapBasisKind {
-  return pension === 'irp' || pension === 'both' ? 'B' : 'A'
+  return pension === 'severance_only' || pension === 'both' ? 'B' : 'A'
 }
 
 /**
@@ -67,24 +67,49 @@ const GAP_SENIOR: Record<Lifestyle, string> = {
   affluent: '약 3억 2,000만 원 부족',
 }
 
-const GAP_BASIS_WORKING = `※ 60세 은퇴 후 30년(360개월) 생존 기준, 국민연금 전국 평균 수령액(총 약 ${NPS_30Y_EOK}억 원) 및 퇴직연금 평균 수령액(약 ${RETIREMENT_AVG_EOK}억 원)을 반영한 사적 준비 갭(Gap)입니다.`
+function ownsPersonalPension(pension: PensionHold): boolean {
+  return pension === 'personal_only' || pension === 'both'
+}
+
+function formatGapLabel(base: string, hasPersonal: boolean): string {
+  return hasPersonal ? `${base} (– 개인연금 누적액)` : base
+}
+
+function gapBasisWorking(pension: PensionHold): string {
+  const notices: Record<PensionHold, string> = {
+    national_only: `※ 60세 은퇴 후 30년 생존 기준, 국민연금 전국 1인당 평균 수령액(총 약 ${NPS_30Y_EOK}억 원)만 차감하여 산출된 순수 사적연금 준비 필요액입니다.`,
+    severance_only: `※ 60세 은퇴 후 30년 생존 기준, 국민연금 전국 평균 수령액(총 약 ${NPS_30Y_EOK}억 원)과 금융당국 통계상 퇴직연금 평균 수령액(약 ${RETIREMENT_AVG_EOK}억 원)을 차감하여 산출된 추가 준비 필요액입니다.`,
+    personal_only: `※ 60세 은퇴 후 30년 생존 기준, 국민연금 전국 평균 수령액(총 약 ${NPS_30Y_EOK}억 원)만 우선 반영한 금액입니다. 현재 납입 중인 개인연금의 평가액에 따라 실제 부족 자금은 이보다 줄어들게 됩니다.`,
+    both: `※ 60세 은퇴 후 30년 생존 기준, 국민연금 전국 평균 수령액(총 약 ${NPS_30Y_EOK}억 원)과 금융당국 통계상 퇴직연금 평균 수령액(약 ${RETIREMENT_AVG_EOK}억 원)을 우선 반영한 금액입니다. 현재 납입 중인 개인연금의 평가액에 따라 실제 부족 자금은 이보다 줄어들게 됩니다.`,
+  }
+  return notices[pension]
+}
 
 const GAP_BASIS_SENIOR = `※ 65세 기준 기대여명 20년(240개월) 생존 기준, 국민연금 20년 예상 수령액(약 ${NPS_20Y_EOK}억 원) 및 60대 가구 평균 금융·퇴직자산 축적분을 차감하여 산출된 순수 부족 자금입니다.`
 
-function gapBadgeOf(pension: PensionHold): {
+const GAP_NOTE_PERSONAL_ONLY =
+  '※ 국민연금 통계 수치를 우선 반영한 금액입니다. 현재 납입 중인 개인연금의 평가액에 따라 실제 부족 자금은 이보다 줄어들게 됩니다.'
+
+const GAP_NOTE_PERSONAL =
+  '※ 국민연금 및 퇴직연금 통계 수치를 우선 반영한 금액입니다. 현재 납입 중인 개인연금의 평가액에 따라 실제 부족 자금은 이보다 줄어들게 됩니다.'
+
+const GAP_WARNING_NO_PERSONAL =
+  '⚠️ 현재 공적연금/퇴직금만으로는 은퇴 후 심각한 자금 공백이 발생할 수 있습니다. 연 최대 148.5만 원의 세액공제 혜택을 챙기면서 개인연금(연금저축/IRP) 안전망을 구축하는 것을 강력히 추천합니다.'
+
+function gapBadgeOf(hasPersonal: boolean): {
   gapBadge: string
   gapBadgeKind: GapBadgeKind
 } {
-  if (pension === 'national') {
+  if (hasPersonal) {
     return {
-      gapBadge: '사적연금 준비 시급',
-      gapBadgeKind: 'urgent',
+      gapBadge: '🟢 개인연금 준비 중 (인출 최적화 필요)',
+      gapBadgeKind: 'prepared',
     }
   }
 
   return {
-    gapBadge: '기존 준비 연금 반영 시 추가 필요액',
-    gapBadgeKind: 'prepared',
+    gapBadge: '🚨 개인연금 준비 시급',
+    gapBadgeKind: 'urgent',
   }
 }
 
@@ -107,32 +132,43 @@ const PRESCRIPTION_SENIOR = [
 ]
 
 const INSIGHT_WORKING: Record<PensionHold, string> = {
-  national:
+  national_only:
     '지금은 국민연금만 계신 상태로 보입니다. IRP·연금저축을 함께 채우면 세액공제와 은퇴 자금 공백을 동시에 보완할 수 있습니다.',
-  personal:
+  personal_only:
     '개인연금(연금저축)을 보유하고 계십니다. IRP와 합산 한도를 확인하면 공제액을 한 단계 더 끌어올릴 수 있습니다.',
-  irp: '퇴직연금(IRP/DC)을 보유하고 계십니다. 연 900만 원 한도까지 추가 납입하면 세액공제 혜택을 더 키울 수 있습니다.',
+  severance_only:
+    '퇴직연금(IRP/DC)을 보유하고 계십니다. 연 900만 원 한도까지 추가 납입하면 세액공제 혜택을 더 키울 수 있습니다.',
   both: '퇴직연금과 개인연금을 함께 보유하고 계십니다. 합산 납입 한도를 채우고 인출 시점을 조율하면 절세와 부족 자금을 동시에 관리할 수 있습니다.',
 }
 
 const INSIGHT_SENIOR: Record<PensionHold, string> = {
-  national:
+  national_only:
     '국민연금만으로는 희망 생활비와의 차이가 클 수 있습니다. 사적연금을 10년 이상 나눠 받으면 세 부담을 낮출 수 있습니다.',
-  personal:
+  personal_only:
     '개인연금을 10년 이상 분할 수령하면 일시 수령 대비 세 부담이 낮아지고, 월 현금흐름도 안정됩니다.',
-  irp: '퇴직연금을 일시금이 아닌 연금으로 나눠 수령하면, 고율 분리과세 대신 저율과세 혜택을 받을 여지가 있습니다.',
+  severance_only:
+    '퇴직연금을 일시금이 아닌 연금으로 나눠 수령하면, 고율 분리과세 대신 저율과세 혜택을 받을 여지가 있습니다.',
   both: '퇴직연금과 개인연금을 함께 보유하고 계십니다. 수령 시기와 기간을 조율하면 저율과세와 건강보험 피부양자 자격을 함께 지킬 수 있습니다.',
 }
 
 export function diagnose(answers: Answers): Diagnosis {
   const isSenior = answers.age === 'senior'
-  const { gapBadge, gapBadgeKind } = gapBadgeOf(answers.pension)
+  const hasPersonal = ownsPersonalPension(answers.pension)
+  const { gapBadge, gapBadgeKind } = gapBadgeOf(hasPersonal)
+  const gapWarning = hasPersonal ? null : GAP_WARNING_NO_PERSONAL
 
   if (isSenior) {
     return {
-      gapLabel: GAP_SENIOR[answers.lifestyle],
+      gapLabel: formatGapLabel(GAP_SENIOR[answers.lifestyle], hasPersonal),
       gapBadge,
       gapBadgeKind,
+      gapNote:
+        answers.pension === 'personal_only'
+          ? GAP_NOTE_PERSONAL_ONLY
+          : hasPersonal
+            ? GAP_NOTE_PERSONAL
+            : GAP_BASIS_SENIOR,
+      gapWarning,
       gapBasis: GAP_BASIS_SENIOR,
       taxHeadline: '연간 최대 330만 원 절세 가능',
       taxBasis: BASIS_SENIOR,
@@ -144,12 +180,15 @@ export function diagnose(answers: Answers): Diagnosis {
 
   const isUnder450 = answers.income === 'under450'
   const basis = gapBasisKind(answers.pension)
+  const calcBasis = gapBasisWorking(answers.pension)
 
   return {
-    gapLabel: GAP_WORKING[basis][answers.lifestyle],
+    gapLabel: formatGapLabel(GAP_WORKING[basis][answers.lifestyle], hasPersonal),
     gapBadge,
     gapBadgeKind,
-    gapBasis: GAP_BASIS_WORKING,
+    gapNote: calcBasis,
+    gapWarning,
+    gapBasis: calcBasis,
     taxHeadline: isUnder450
       ? '연간 최대 148만 5,000원 환급 가능'
       : '연간 최대 118만 8,000원 환급 가능',

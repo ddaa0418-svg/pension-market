@@ -1,6 +1,10 @@
 export type AgeGroup = 'young' | 'mid' | 'senior'
 export type IncomeBand = 'under450' | 'over450'
-export type PensionHold = 'national' | 'personal' | 'irp' | 'both'
+export type PensionHold =
+  | 'national_only'
+  | 'personal_only'
+  | 'severance_only'
+  | 'both'
 export type Lifestyle = 'modest' | 'hobby' | 'affluent'
 
 export type Answers = {
@@ -26,6 +30,8 @@ export type Diagnosis = {
   gapLabel: string
   gapBadge: string
   gapBadgeKind: GapBadgeKind
+  gapNote: string
+  gapWarning: string | null
   gapBasis: string
   taxHeadline: string
   taxBasis: string
